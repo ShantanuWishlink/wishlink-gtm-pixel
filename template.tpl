@@ -162,52 +162,49 @@ ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
 const localStorage = require('localStorage');
 const sendPixel = require('sendPixel');
-const log = require('logToConsole');
 const copyFromDataLayer = require('copyFromDataLayer');
 const encodeUriComponent = require('encodeUriComponent');
 
 
-if(localStorage !== undefined){
-    let atgSessionId = localStorage.getItem('atgSessionId');
-    if(atgSessionId){
-        let atgApiUrl = 'https://api.allthingsgood.app/api/markSale?';
-        let atgItems = '~';
-        let atgDataString = '';
-        
-        if(data.enhancedEcomm){
-          const ecomm = copyFromDataLayer('ecommerce') || {};
-          
-          let atgCartDetails = ecomm.purchase.products;
-          let atgCurrency = ecomm.currencyCode;
-          let atgSaleAmount = ecomm.purchase.actionField.revenue;
-          let atgOrderId = ecomm.purchase.actionField.id;
-          let atgCouponCode = ecomm.purchase.actionField.coupon;
-          let atgNumOrders = 1;
-          
-          atgCartDetails.forEach((item) => {
-            atgItems += item.name + "**" + item.quantity + "~";
-            });
-          atgItems = encodeUriComponent(atgItems);
-          atgDataString = "atgSessionId=" + atgSessionId + "&saleAmount=" + atgSaleAmount + "&platform=" + data.atgPlatformName + "&currency=" + atgCurrency + "&orderId=" + atgOrderId + "&items=" + atgItems + "&couponCode=" + atgCouponCode + "&numOrders=" + atgNumOrders;
-        }
-      
-        else{
-          data.atgProductDetails.forEach((item) => {
-            atgItems += item.name + "**" + item.quantity + "~";
-          });
-          
-          atgItems = encodeUriComponent(atgItems);
-          atgDataString = "atgSessionId=" + atgSessionId + "&saleAmount=" + data.atgSaleAmount + "&platform=" + data.atgPlatformName + "&currency=" + data.atgCurrency + "&orderId=" + data.atgOrderId + "&items=" + atgItems + "&couponCode=" + data.atgCouponCode + "&numOrders=" + data.atgNumOrders;
-          
-        }
-      
-        let atgUrl = atgApiUrl + atgDataString;
-        // Remove the local storage variable
-        localStorage.removeItem('atgSessionId');
-    
-        sendPixel(atgUrl, data.gtmOnSuccess, data.gtmOnFailure);
-    }
+let atgSessionId = localStorage.getItem('atgSessionId');
+let atgApiUrl = 'https://api.wishlink.com/api/markSale?';
+let atgItems = '~';
+let atgDataString = '';
+let atgCouponCode = null;
+
+if(data.enhancedEcomm){
+  const ecomm = copyFromDataLayer('ecommerce') || {};
+  
+  let atgCartDetails = ecomm.purchase.products;
+  let atgCurrency = ecomm.currencyCode;
+  let atgSaleAmount = ecomm.purchase.actionField.revenue;
+  let atgOrderId = ecomm.purchase.actionField.id;
+  atgCouponCode = ecomm.purchase.actionField.coupon;
+  let atgNumOrders = 1;
+  
+  atgCartDetails.forEach((item) => {
+    atgItems += item.name + "**" + item.quantity + "~";
+    });
+  atgItems = encodeUriComponent(atgItems);
+  atgDataString = "atgSessionId=" + encodeUriComponent(atgSessionId) + "&saleAmount=" + encodeUriComponent(atgSaleAmount) + "&platform=" + encodeUriComponent(data.atgPlatformName) + "&currency=" + encodeUriComponent(atgCurrency) + "&orderId=" + encodeUriComponent(atgOrderId) + "&items=" + atgItems + "&couponCode=" + encodeUriComponent(atgCouponCode) + "&numOrders=" + encodeUriComponent(atgNumOrders);
 }
+
+else{
+  data.atgProductDetails.forEach((item) => {
+    atgItems += item.name + "**" + item.quantity + "~";
+  });
+
+  atgCouponCode = data.atgCouponCode;
+  atgItems = encodeUriComponent(atgItems);
+  atgDataString = "atgSessionId=" + encodeUriComponent(atgSessionId) + "&saleAmount=" + encodeUriComponent(data.atgSaleAmount) + "&platform=" + encodeUriComponent(data.atgPlatformName) + "&currency=" + encodeUriComponent(data.atgCurrency) + "&orderId=" + encodeUriComponent(data.atgOrderId) + "&items=" + atgItems + "&couponCode=" + encodeUriComponent(data.atgCouponCode) + "&numOrders=" + encodeUriComponent(data.atgNumOrders);  
+}
+
+if(atgSessionId || atgCouponCode){
+  let atgUrl = atgApiUrl + atgDataString;
+  localStorage.removeItem('atgSessionId');
+  sendPixel(atgUrl, data.gtmOnSuccess, data.gtmOnFailure);
+}
+data.gtmOnSuccess();
 
 
 ___WEB_PERMISSIONS___
